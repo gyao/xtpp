@@ -1,4 +1,4 @@
-module Gutpp
+module Xtpp
 	class Page
 		def initialize(title, render)
 			@title = title

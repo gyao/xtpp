@@ -1,4 +1,4 @@
-module Gutpp
+module Xtpp
 	class FileParser
 		def initialize(file_name, page_builder)
 			@file_name = file_name

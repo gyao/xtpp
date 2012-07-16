@@ -1,4 +1,4 @@
-module Gutpp
+module Xtpp
 	class BaseRender
 		def initialize
 			# do nothing
@@ -14,34 +14,6 @@ module Gutpp
 				text = text[idx..-1]
 			end while text.length > 0
 			lines
-		end
-
-		def split_lines_old(text, width)
-			lines = []
-			return lines unless text
-			begin
-				i = width
-				if text.length <= i then # text length is OK -> add it to array and stop splitting
-					lines << text
-					text = ""
-				else 
-					# search for word boundary (space actually)
-					while i > 0 and text[i] != ' '[0] do
-						i -= 1
-					end
-					
-					# if we can't find any space character, simply cut it off at the maximum width
-					i = width if i == 0
-
-					# extract line
-					x = text[0..i-1]
-					# remove extracted line
-					text = text[i+1..-1]
-					# added line to array
-					lines << x
-				end
-			end while text.length > 0
-			return lines
 		end
 
 		def self.define_method_for(name)

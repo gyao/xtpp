@@ -1,4 +1,4 @@
-module Gutpp
+module Xtpp
 	# Maps color names to constants and indexes.
 	class ColorMap
 

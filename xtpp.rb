@@ -19,9 +19,9 @@ def load_ncurses
 end
 
 load_ncurses
-render = Gutpp::NcrusesRender.new
-page_builder = Gutpp::PageBuilder.new(render)
-presentation_file = Gutpp::FileParser.new('test.tpp', page_builder)
+render = Xtpp::NcrusesRender.new
+page_builder = Xtpp::PageBuilder.new(render)
+presentation_file = Xtpp::FileParser.new('test.tpp', page_builder)
 
 def with_page_break(title)
 	$stdout.puts "---------- Begin Page #{title} ----------"
