@@ -20,8 +20,7 @@ module Xtpp
 			define_method(name) {
 				$stderr.puts "Error: BaseRender##{name} has been called directly."
 				Kernel.exit(1)
-			}
-			
+			}	
 		end
 
 		commands = ["do_footer", "do_header", "do_refresh", "new_page", "do_heading", "do_withborder", "do_horline", "do_color", "do_center", "do_right", "do_exec", "do_wait", "do_beginoutput", "do_beginshelloutput", "do_endoutput", "do_endshelloutput", "do_sleep", "do_boldon", "do_boldoff", "do_revon", "do_revoff", "do_ulon", "do_uloff", "do_beginslideleft", "do_slide", "do_command_prompt", "do_beginslideright", "do_beginslidetop", "do_beginslidebottom", "do_sethugefont", "do_huge", "print_line", "do_title", "do_author", "do_date", "do_bgcolor", "do_fgcolor"]
@@ -42,10 +41,10 @@ module Xtpp
 				do_color(color)
 			when /^--center /
 				text = line.sub(/^--center /, "")
-				do_center(text)
+				do_align(:center, text)
 			when /^--right /
 				text = line.sub(/^--right /, "")
-				do_right(text)
+				do_align(:right, text)
 			when /^--exec /
 				cmdline = line.sub(/^--exec /, "")
 				do_exec(cmdline)
@@ -75,27 +74,22 @@ module Xtpp
 				do_ulon
 			when /^--uloff/
 				do_uloff
-			when /^--beginslideleft/
-				do_beginslideleft
-			when /^--endslideleft/, /^--endslideright/, /^--endslidetop/, /^--endslidebottom/
+			when /^--beginslide/
+				direction = line.sub(/^--beginslide /, "left")
+				do_beginslide(direction)
+			when /^--endslide/
 				do_endslide
-			when /^--beginslideright/
-				do_beginslideright
-			when /^--beginslidetop/
-				do_beginslidetop
-			when /^--beginslidebottom/
-				do_beginslidebottom
 			when /^--sethugefont /
-				params = line.sub(/^--sethugefont /,"")
+				params = line.sub(/^--sethugefont /, "")
 				do_sethugefont(params.strip)
 			when /^--huge /
-				figlet_text = line.sub(/^--huge /,"")
+				figlet_text = line.sub(/^--huge /, "")
 				do_huge(figlet_text)
 			when /^--footer /
-				@footer_txt = line.sub(/^--footer /,"")
+				@footer_txt = line.sub(/^--footer /, "")
 				do_footer(@footer_txt) 
 			when /^--header /
-				@header_txt = line.sub(/^--header /,"")
+				@header_txt = line.sub(/^--header /, "")
 				do_header(@header_txt) 
 			when /^--title /
 				title = line.sub(/^--title /,"")
@@ -104,7 +98,7 @@ module Xtpp
 				author = line.sub(/^--author /,"")
 				do_author(author)
 			when /^--date /
-				date = line.sub(/^--date /,"")
+				date = line.sub(/^--date /, "")
 				if date == "today" then
 					date = Time.now.strftime("%b %d %Y")
 				elsif date =~ /^today / then
@@ -165,12 +159,12 @@ module Xtpp
 		# implements template methods
 
 		def do_footer(footer_txt)
-			@screen.move(@termheight - 3, (@termwidth - footer_txt.length)/2)
+			@screen.move(@termheight - 3, (@termwidth - footer_txt.length) / 2)
 			@screen.addstr(footer_txt)
 		end
 
 		def do_header(header_txt)
-			@screen.move(@termheight - @termheight+1, (@termwidth - header_txt.length)/2)
+			@screen.move(@termheight - @termheight+1, (@termwidth - header_txt.length) / 2)
 			@screen.addstr(header_txt)
 		end
 
@@ -210,41 +204,30 @@ module Xtpp
 			Ncurses.attron(Ncurses.COLOR_PAIR(num))
 		end
 
-		def do_center(text)
+		def do_align(direction, text)
 			width = @termwidth - 2 * @indent
 			width -= 2 if @output or @shelloutput
 			lines = split_lines(text, width)
 			lines.each do |l|
 				@screen.move(@cur_line, @indent)
 				@screen.addstr(" |") if @output or @shelloutput
-				x = (@termwidth - l.length) / 2
+				if direction == :center
+					x = (@termwidth - l.length) / 2
+				elsif direction == :right
+					x = (@termwidth - l.length - 5)
+				end
 				@screen.move(@cur_line, x)
 				@screen.addstr(l)
-				if @output or @shelloutput then
-					@screen.move(@cur_line, @termwidth - @indent - 2)
+				if @output or @shelloutput
+					@screen.move(@cur_line, @termwidth - @indent - 2) if direction == :center
 					@screen.addstr(" |")
 				end
 				@cur_line += 1
 			end
 		end
 
-		def do_right(text)
-			width = @termwidth - 2*@indent
-			width -= 2 if @output or @shelloutput
-			lines = split_lines(text, width)
-			lines.each do |l|
-				@screen.move(@cur_line,@indent)
-				@screen.addstr("| ") if @output or @shelloutput
-				x = (@termwidth - l.length - 5)
-				@screen.move(@cur_line, x)
-				@screen.addstr(l)
-				@screen.addstr(" |") if @output or @shelloutput
-				@cur_line += 1
-			end
-		end
-
 		def do_exec
-			
+			# TODO: implement later
 		end
 
 		def do_wait
@@ -267,7 +250,6 @@ module Xtpp
 			draw_output_border :end if @output
 			@output = false
 			@cur_line += 1
-			end
 		end
 
 		def do_endshelloutput
@@ -304,13 +286,89 @@ module Xtpp
 			@screen.attroff(Ncurses::A_UNDERLINE)
 		end
 
-		def do_beginslideleft
+		def do_beginslide(direction)
 			@slideoutput = true
-			@slidedir = "left"
+			@slidedir = direction
 		end
 
 		def do_endslide
 			@slideoutput = false
+		end
+
+		def do_sethugefont(params)
+			@figletfont = params
+		end
+
+		def do_huge(figlet_text)
+			output_width = @termwidth - @indent
+			output_width -= 2 if @output or @shelloutput
+			op = IO.popen("figlet -f #{@figletfont} -w #{output_width} -k \"#{figlet_text}\"","r") # gyao: what's figlet??
+			op.readlines.each do |line|
+				print_line(line)
+			end
+			op.close
+		end
+
+		def print_line(line)
+			width = @termwidth - 2 * @indent
+			width -= 2 if @output or @shelloutput
+			lines = split_lines(line, width)
+			lines.each do |l|
+				@screen.move(@cur_line, @indent)
+				@screen.addstr("| ") if (@output or @shelloutput) and ! @slideoutput
+				
+				if @shelloutput and (l =~ /^\$/ or l=~ /^%/ or l =~ /^#/ or l =~ /^>/) then
+					type_line(l)
+				elsif @slideoutput then
+					slide_text(l)
+				else
+					@screen.addstr(l)
+				end
+				if (@output or @shelloutput) and ! @slideoutput then
+					@screen.move(@cur_line,@termwidth - @indent - 2)
+					@screen.addstr(" |")
+				end
+				@cur_line += 1
+			end
+		end
+
+		def do_title(title)
+			do_boldon
+			do_align(:center, title)
+			do_boldoff
+			do_align(:center, "")
+		end
+
+		def do_author(author)
+			do_align(:center, author)
+			do_align(:center, "")
+		end
+
+		def do_date(date)
+			do_align(:center, date)
+			do_align(:center, "")
+		end
+
+		def do_bgcolor(color)
+			bgcolor = ColorMap.get_color(color) or COLOR_BLACK
+			Ncurses.init_pair(1, COLOR_WHITE, bgcolor)
+			Ncurses.init_pair(2, COLOR_YELLOW, bgcolor)
+			Ncurses.init_pair(3, COLOR_RED, bgcolor)
+			Ncurses.init_pair(4, COLOR_GREEN, bgcolor)
+			Ncurses.init_pair(5, COLOR_BLUE, bgcolor)
+			Ncurses.init_pair(6, COLOR_CYAN, bgcolor)
+			Ncurses.init_pair(7, COLOR_MAGENTA, bgcolor)
+			Ncurses.init_pair(8, COLOR_BLACK, bgcolor)
+			if @fgcolor then
+				Ncurses.bkgd(Ncurses.COLOR_PAIR(@fgcolor))
+			else
+				Ncurses.bkgd(Ncurses.COLOR_PAIR(1))
+			end
+		end
+
+		def do_fgcolor(color)
+			@fgcolor = ColorMap.get_color_pair(color)
+			Ncurses.attron(Ncurses.COLOR_PAIR(@fgcolor))
 		end
 
 		private
@@ -352,6 +410,62 @@ module Xtpp
 			@screen.addstr(".") if type == :begin
 			@screen.addstr("'") if type == :end
 		end
+
+		def type_line(l)
+			l.each_byte do |x|
+				@screen.addstr(x.chr)
+				@screen.refresh()
+				r = rand(20)
+				time_to_sleep = (5 + r).to_f / 250;
+				Kernel.sleep(time_to_sleep)
+			end
+		end
+
+		def slide_text(l)
+			return if l == ""
+			case @slidedir
+			when "left"
+				xcount = l.length-1
+				while xcount >= 0
+					@screen.move(@cur_line,@indent)
+					@screen.addstr(l[xcount..l.length-1])
+					@screen.refresh()
+					time_to_sleep = 1.to_f / 20
+					Kernel.sleep(time_to_sleep)
+					xcount -= 1
+				end	
+			when "right"
+				(@termwidth - @indent).times do |pos|
+					@screen.move(@cur_line,@termwidth - pos - 1)
+					@screen.clrtoeol()
+					maxpos = (pos >= l.length-1) ? l.length-1 : pos
+					@screen.addstr(l[0..pos])
+					@screen.refresh()
+					time_to_sleep = 1.to_f / 20
+					Kernel.sleep(time_to_sleep)
+				end # do
+			when "top"
+				# ycount = @cur_line
+				new_scr = @screen.dupwin
+				1.upto(@cur_line) do |i|
+					Ncurses.overwrite(new_scr,@screen) # overwrite @screen with new_scr
+					@screen.move(i,@indent)
+					@screen.addstr(l)
+					@screen.refresh()
+					Kernel.sleep(1.to_f / 10)
+				end
+			when "bottom"
+				new_scr = @screen.dupwin
+				(@termheight-1).downto(@cur_line) do |i|
+					Ncurses.overwrite(new_scr,@screen)
+					@screen.move(i,@indent)
+					@screen.addstr(l)
+					@screen.refresh()
+					Kernel.sleep(1.to_f / 10)
+				end
+			end
+		end
+
 
 		def clear
 			@screen.clear
