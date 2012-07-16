@@ -2,3 +2,5 @@
 * shelloutput prompt
 * table support
 * image?
+
+dependents: figlet, ncruses-ruby
