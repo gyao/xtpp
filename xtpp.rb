@@ -4,6 +4,7 @@
 require "./file_parser.rb"
 require "./page.rb"
 require "./renders.rb"
+require "./controller.rb"
 
 VERSION_NBR_MAJOR = 0
 VERSION_NBR_MINOR = 2
@@ -19,8 +20,8 @@ def load_ncurses
 end
 
 load_ncurses
-render = Xtpp::NcrusesRender.new
-page_builder = Xtpp::PageBuilder.new(render)
+renderer = Xtpp::NcrusesRender.new
+page_builder = Xtpp::PageBuilder.new(renderer)
 presentation_file = Xtpp::FileParser.new('test.tpp', page_builder)
 
 def with_page_break(title)

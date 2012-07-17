@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 module Xtpp
 	# Maps color names to constants and indexes.
 	class ColorMap

@@ -1,9 +1,19 @@
+# -*- coding: UTF-8 -*-
+
 module Xtpp
 	class BaseRender
 		def initialize
-			# do nothing
+			
 		end
 		
+		@commands = ["footer", "header", "refresh", "new_page", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "slide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		@commands.each do |command|
+			define_method("do_#{command}") do |params|
+				$stderr.puts "Error: BaseRender#do_#{command} has been called directly."
+				Kernel.exit(1)
+			end
+		end
+
 		def split_lines(text, width)
 			lines = []
 			return lines unless text
@@ -16,128 +26,38 @@ module Xtpp
 			lines
 		end
 
-		def self.define_method_for(name)
-			define_method(name) {
-				$stderr.puts "Error: BaseRender##{name} has been called directly."
-				Kernel.exit(1)
-			}	
-		end
-
-		commands = ["do_footer", "do_header", "do_refresh", "new_page", "do_heading", "do_withborder", "do_horline", "do_color", "do_center", "do_right", "do_exec", "do_wait", "do_beginoutput", "do_beginshelloutput", "do_endoutput", "do_endshelloutput", "do_sleep", "do_boldon", "do_boldoff", "do_revon", "do_revoff", "do_ulon", "do_uloff", "do_beginslideleft", "do_slide", "do_command_prompt", "do_beginslideright", "do_beginslidetop", "do_beginslidebottom", "do_sethugefont", "do_huge", "print_line", "do_title", "do_author", "do_date", "do_bgcolor", "do_fgcolor"]
-		commands.each { |command| define_method_for command}
-
-		def rend(line)
-			case line
-			when /^--heading /
-				heading = line.sub(/^--heading /, "")
-				do_heading(heading)
-			when /^--withborder/
-				do_withborder
-			when /^--horline/
-				do_horline
-			when /^--color /
-				color = line.sub(/^--color /, "")
-				color.strip!
-				do_color(color)
-			when /^--center /
-				text = line.sub(/^--center /, "")
-				do_align(:center, text)
-			when /^--right /
-				text = line.sub(/^--right /, "")
-				do_align(:right, text)
-			when /^--exec /
-				cmdline = line.sub(/^--exec /, "")
-				do_exec(cmdline)
-			when /^---/
-				do_wait
-				return true
-			when /^--beginoutput/
-				do_beginoutput
-			when /^--beginshelloutput/
-				do_beginshelloutput
-			when /^--endoutput/
-				do_endoutput
-			when /^--endshelloutput/
-				do_endshelloutput
-			when /^--sleep /
-				time2sleep = line.sub(/^--sleep /, "")
-				do_sleep(time2sleep)
-			when /^--boldon/
-				do_boldon
-			when /^--boldoff/
-				do_boldoff
-			when /^--revon/
-				do_revon
-			when /^--revoff/
-				do_revoff
-			when /^--ulon/
-				do_ulon
-			when /^--uloff/
-				do_uloff
-			when /^--beginslide/
-				direction = line.sub(/^--beginslide /, "left")
-				do_beginslide(direction)
-			when /^--endslide/
-				do_endslide
-			when /^--sethugefont /
-				params = line.sub(/^--sethugefont /, "")
-				do_sethugefont(params.strip)
-			when /^--huge /
-				figlet_text = line.sub(/^--huge /, "")
-				do_huge(figlet_text)
-			when /^--footer /
-				@footer_txt = line.sub(/^--footer /, "")
-				do_footer(@footer_txt) 
-			when /^--header /
-				@header_txt = line.sub(/^--header /, "")
-				do_header(@header_txt) 
-			when /^--title /
-				title = line.sub(/^--title /,"")
-				do_title(title)
-			when /^--author /
-				author = line.sub(/^--author /,"")
-				do_author(author)
-			when /^--date /
-				date = line.sub(/^--date /, "")
-				if date == "today" then
-					date = Time.now.strftime("%b %d %Y")
-				elsif date =~ /^today / then
-					date = Time.now.strftime(date.sub(/^today /,""))
+		def render(line)
+			@commands = ["footer", "header", "refresh", "new_page", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "slide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			@commands.each do |command|
+				if Regexp.new("^--#{command} ") =~ line
+					method_name = "do_#{$&[2..-1].strip}"
+					params = line.sub(Regexp.new("^#{$&}"), "").strip
+					self.send(method_name, params)
+					return true if command == "wait"
+				else
+					print_line(line)
 				end
-				do_date(date)
-			when /^--bgcolor /
-				color = line.sub(/^--bgcolor /,"").strip
-				do_bgcolor(color)
-			when /^--fgcolor /
-				color = line.sub(/^--fgcolor /,"").strip
-				do_fgcolor(color)
-			when /^--color /
-				color = line.sub(/^--color /,"").strip
-				do_color(color)
-			else
-				print_line(line)
 			end
-			
+
 			return false
 		end
 		
 	end
 
 	class StdoutRender < BaseRender
-		require "./color.rb"
 		def initialize
 			# do nothing
 		end
 
-		def rend(line)
+		def render(line)
 			$stdout.puts "#{line}"
 		end
 		
 	end
 
 	class NcrusesRender < BaseRender
+		require "./color.rb"
 		def initialize
-			@figletfont = "standard"
 			Ncurses.initscr
 			Ncurses.curs_set(0)
 			Ncurses.cbreak # unbuffered input
@@ -148,7 +68,8 @@ module Xtpp
 			setsizes
 			Ncurses.start_color()
 			Ncurses.use_default_colors()
-			#do_bgcolor("black")
+			@figletfont = "standard"
+			do_bgcolor("black")
 			@fgcolor = ColorMap.get_color_pair("white")
 			@voffset = 5
 			@indent = 3
@@ -159,20 +80,22 @@ module Xtpp
 		# implements template methods
 
 		def do_footer(footer_txt)
+			@footer_txt = footer_txt
 			@screen.move(@termheight - 3, (@termwidth - footer_txt.length) / 2)
 			@screen.addstr(footer_txt)
 		end
 
 		def do_header(header_txt)
+			@header_txt = header_txt
 			@screen.move(@termheight - @termheight+1, (@termwidth - header_txt.length) / 2)
 			@screen.addstr(header_txt)
 		end
 
-		def do_refresh
+		def do_refresh(params)
 			@screen.refresh
 		end
 
-		def new_page
+		def do_new_page(params)
 			@cur_line = @voffset
 			@output = @shelloutput = false
 			setsizes
@@ -185,12 +108,12 @@ module Xtpp
 			@screen.attroff(Ncurses::A_BOLD)
 		end
 
-		def do_withborder
+		def do_withborder(params)
 			@withborder = true
 			draw_border
 		end
 
-		def do_horline
+		def do_horline(params)
 			@screen.attron(Ncurses::A_BOLD)
 			@termwidth.times do |x|
 				@screen.move(@cur_line, x)
@@ -204,55 +127,41 @@ module Xtpp
 			Ncurses.attron(Ncurses.COLOR_PAIR(num))
 		end
 
-		def do_align(direction, text)
-			width = @termwidth - 2 * @indent
-			width -= 2 if @output or @shelloutput
-			lines = split_lines(text, width)
-			lines.each do |l|
-				@screen.move(@cur_line, @indent)
-				@screen.addstr(" |") if @output or @shelloutput
-				if direction == :center
-					x = (@termwidth - l.length) / 2
-				elsif direction == :right
-					x = (@termwidth - l.length - 5)
-				end
-				@screen.move(@cur_line, x)
-				@screen.addstr(l)
-				if @output or @shelloutput
-					@screen.move(@cur_line, @termwidth - @indent - 2) if direction == :center
-					@screen.addstr(" |")
-				end
-				@cur_line += 1
-			end
+		def do_center(text)
+			do_align(:center, text)
 		end
 
-		def do_exec
+		def do_right(text)
+			do_align(:right, text)
+		end
+
+		def do_exec(params)
 			# TODO: implement later
 		end
 
-		def do_wait
+		def do_wait(params)
 			# nothing
 		end
 
-		def do_beginoutput
+		def do_beginoutput(params)
 			@output = true
 			draw_output_border :begin
 			@cur_line += 1
 		end
 
-		def do_beginshelloutput
+		def do_beginshelloutput(params)
 			@shelloutput = true
 			draw_output_border :begin
 			@cur_line += 1
 		end
 
-		def do_endoutput
+		def do_endoutput(params)
 			draw_output_border :end if @output
 			@output = false
 			@cur_line += 1
 		end
 
-		def do_endshelloutput
+		def do_endshelloutput(params)
 			draw_output_border :end if @shelloutput
 			@shelloutput = false
 			@cur_line += 1
@@ -262,27 +171,27 @@ module Xtpp
 			Kernel.sleep(time2sleep.to_i)
 		end
 
-		def do_boldon
+		def do_boldon(params)
 			@screen.attron(Ncurses::A_BOLD)
 		end
 
-		def do_boldoff
+		def do_boldoff(params)
 			@screen.attroff(Ncurses::A_BOLD)
 		end
 
-		def do_revon
+		def do_revon(params)
 			@screen.attron(Ncurses::A_REVERSE)
 		end
 
-		def do_revoff
+		def do_revoff(params)
 			@screen.attroff(Ncurses::A_REVERSE)
 		end
 
-		def do_ulon
+		def do_ulon(params)
 			@screen.attron(Ncurses::A_UNDERLINE)
 		end
 
-		def do_uloff
+		def do_uloff(params)
 			@screen.attroff(Ncurses::A_UNDERLINE)
 		end
 
@@ -291,7 +200,7 @@ module Xtpp
 			@slidedir = direction
 		end
 
-		def do_endslide
+		def do_endslide(params)
 			@slideoutput = false
 		end
 
@@ -302,7 +211,7 @@ module Xtpp
 		def do_huge(figlet_text)
 			output_width = @termwidth - @indent
 			output_width -= 2 if @output or @shelloutput
-			op = IO.popen("figlet -f #{@figletfont} -w #{output_width} -k \"#{figlet_text}\"","r") # gyao: what's figlet??
+			op = IO.popen("figlet -f #{@figletfont} -w #{output_width} -k \"#{figlet_text}\"","r")
 			op.readlines.each do |line|
 				print_line(line)
 			end
@@ -333,9 +242,9 @@ module Xtpp
 		end
 
 		def do_title(title)
-			do_boldon
+			do_boldon(nil)
 			do_align(:center, title)
-			do_boldoff
+			do_boldoff(nil)
 			do_align(:center, "")
 		end
 
@@ -344,7 +253,13 @@ module Xtpp
 			do_align(:center, "")
 		end
 
-		def do_date(date)
+		def do_date(params)
+			date = params
+			if date == "today" then
+				date = Time.now.strftime("%b %d %Y")
+			elsif date =~ /^today / then
+				date = Time.now.strftime(date.sub(/^today /,""))
+			end
 			do_align(:center, date)
 			do_align(:center, "")
 		end
@@ -369,6 +284,45 @@ module Xtpp
 		def do_fgcolor(color)
 			@fgcolor = ColorMap.get_color_pair(color)
 			Ncurses.attron(Ncurses.COLOR_PAIR(@fgcolor))
+		end
+
+		# controller implementations
+		def close
+			Ncurses.nocbreak
+			Ncurses.endwin
+		end
+
+		def clear
+			@screen.clear
+			@screen.refresh
+		end
+
+		def get_key
+			
+		end
+
+		def clear
+			
+		end
+
+		def store_screen
+			
+		end
+
+		def restore_screen
+			
+		end
+
+		def draw_slidenum(num)
+			
+		end
+
+		def refresh
+			
+		end
+
+		def show_help
+			
 		end
 
 		private
@@ -409,6 +363,28 @@ module Xtpp
 			(@termwidth - @indent * 2 - 2).times { @screen.addstr("-") }
 			@screen.addstr(".") if type == :begin
 			@screen.addstr("'") if type == :end
+		end
+
+		def do_align(direction, text)
+			width = @termwidth - 2 * @indent
+			width -= 2 if @output or @shelloutput
+			lines = split_lines(text, width)
+			lines.each do |l|
+				@screen.move(@cur_line, @indent)
+				@screen.addstr(" |") if @output or @shelloutput
+				if direction == :center
+					x = (@termwidth - l.length) / 2
+				elsif direction == :right
+					x = (@termwidth - l.length - 5)
+				end
+				@screen.move(@cur_line, x)
+				@screen.addstr(l)
+				if @output or @shelloutput
+					@screen.move(@cur_line, @termwidth - @indent - 2) if direction == :center
+					@screen.addstr(" |")
+				end
+				@cur_line += 1
+			end
 		end
 
 		def type_line(l)
@@ -464,12 +440,6 @@ module Xtpp
 					Kernel.sleep(1.to_f / 10)
 				end
 			end
-		end
-
-
-		def clear
-			@screen.clear
-			@screen.refresh
 		end
 
 		def setsizes

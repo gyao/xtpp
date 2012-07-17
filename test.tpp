@@ -1,12 +1,12 @@
---bgcolor white
---fgcolor black
+--fgcolor red
 --title TPP Feature Show
 --author Andreas Krennmair
 --date today
 --newpage intro
---heading What is TPP?  什么是gutpp?
+--heading What is TPP?  什么是 xtpp?
 
   * A text console application
+  * 是一个文本工具
 ---
 
   * "Powerpoint for Sven G^W^Wtext tool users"

@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 module Xtpp
 	class Page
 		def initialize(title, render)
@@ -37,7 +39,7 @@ module Xtpp
 		end
 
 		def show
-			@lines.each { | line | @render.rend(line) }
+			@lines.each { | line | @render.render(line) }
 		end
 		
 	end

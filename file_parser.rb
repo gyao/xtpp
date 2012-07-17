@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 module Xtpp
 	class FileParser
 		def initialize(file_name, page_builder)
