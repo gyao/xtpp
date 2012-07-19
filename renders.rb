@@ -27,13 +27,19 @@ module Xtpp
 			end
 		end
 
-		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
-			$stderr.puts line.end_with? "||"
+			if line.end_with? "||"
+				ret_value = true
+				line.chomp!("||")
+			else
+				ret_value = false
+			end
+
 			matched = ""
-			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 			commands.each do |command|
 				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
 			end
@@ -41,12 +47,13 @@ module Xtpp
 				method_name = "do_#{matched[2..-1].strip}"
 				params = line.sub(Regexp.new("^#{matched}"), "").strip
 				self.send(method_name, params)
-				return true if method_name == "do_wait"
-				return false
+				return ret_value
 			else
 				print_line(line)
+
+				return ret_value
 			end
-			return false
+			return ret_value
 		end
 		
 	end
