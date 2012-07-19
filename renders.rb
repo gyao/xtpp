@@ -240,7 +240,7 @@ module Xtpp
 				@screen.move(@cur_line, @indent)
 				@screen.addstr("| ") if (@output or @shelloutput) and ! @slideoutput
 				
-				if @shelloutput and (l =~ /^\$/ or l=~ /^%/ or l =~ /^#/ or l =~ /^>/) then
+				if @shelloutput and (l =~ /\$/ or l=~ /%/ or l =~ /#/ or l =~ />/) then
 					type_line(l)
 				elsif @slideoutput then
 					slide_text(l)
@@ -480,7 +480,12 @@ module Xtpp
 		end
 
 		def type_line(l)
-			l.each_byte do |x|
+			if l =~ /\$/ or l=~ /%/ or l =~ /#/ or l =~ />/
+				idx = l.index($&)
+				prompt = l[0..idx - 1]
+			end
+			@screen.addstr(prompt)
+			l[idx..-1].each_byte do |x|
 				@screen.addstr(x.chr)
 				@screen.refresh()
 				r = rand(20)
