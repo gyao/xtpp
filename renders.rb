@@ -82,6 +82,7 @@ module Xtpp
 			@indent = 3
 			@cur_line = @voffset
 			@output = @shelloutput = false
+			@bold = @reverse = @underline = false
 		end
 
 		# implements template methods
@@ -174,24 +175,30 @@ module Xtpp
 		def do_bold(switch)
 			if switch == "on"
 				@screen.attron(Ncurses::A_BOLD)
+				@bold = true
 			else
 				@screen.attroff(Ncurses::A_BOLD) # default is turn off, I'm a conservative guy... :)
+				@bold = false
 			end
 		end
 
 		def do_reverse(switch)
 			if switch == "on"
 				@screen.attron(Ncurses::A_REVERSE) 
+				@reverse = true
 			else
 				@screen.attroff(Ncurses::A_REVERSE)
+				@reverse = false
 			end
 		end
 
 		def do_underline(switch)
 			 if switch == "on"
 			 	@screen.attron(Ncurses::A_UNDERLINE)
+			 	@underline = true
 			 else
 				@screen.attroff(Ncurses::A_UNDERLINE)
+				@underline = false
 			end
 		end
 
@@ -326,11 +333,20 @@ module Xtpp
 
 		def draw_slidenum(cur_page,max_pages,eop)
 			@screen.move(@termheight - 2, @indent)
-			@screen.attroff(Ncurses::A_BOLD) # this is bad
+			# turn off attributes
+			@screen.attroff(Ncurses::A_BOLD)
+			@screen.attroff(Ncurses::A_REVERSE)
+			@screen.attroff(Ncurses::A_UNDERLINE)
+
 			@screen.addstr("[slide #{cur_page}/#{max_pages}]")
 			do_footer(@footer_txt) if @footer_txt.to_s.length > 0
 			do_header(@header_txt) if @header_txt.to_s.length > 0
 			draw_eop_marker if eop
+
+			# turn attributes back
+			@screen.attron(Ncurses::A_BOLD) if @bold
+			@screen.attron(Ncurses::A_REVERSE) if @reverse
+			@screen.attron(Ncurses::A_UNDERLINE) if @underline
 		end
 
 		def do_refresh(params)
