@@ -7,7 +7,7 @@ require "./renders.rb"
 require "./controller.rb"
 
 VERSION_NBR_MAJOR = 0
-VERSION_NBR_MINOR = 2
+VERSION_NBR_MINOR = 7
 
 def load_ncurses
 	begin
@@ -19,19 +19,32 @@ def load_ncurses
 	end
 end
 
+def usage
+	$stderr.puts "usage: #{$0} <file>\n"
+	$stderr.puts "\t -v\t--version\tprint the version"
+	$stderr.puts "\t -h\t--help\t\tprint this help"
+	Kernel.exit(1)
+end
+
+# main program starts here
+
+input = nil
+ARGV.each_index do |i|
+	if ARGV[i] == '-v' or ARGV[i] == '--version' then
+		printf "xtpp - extended text presentation program %s.%s\n", VERSION_NBR_MAJOR, VERSION_NBR_MINOR
+		Kernel.exit(1)
+	elsif ARGV[i] == '-h' or ARGV[i] == '--help' then
+		usage
+	elsif input == nil then
+		input = ARGV[i]
+	end
+end
+
+if input == nil then
+	usage
+end
+
 load_ncurses
-ctrl = Xtpp::InteractiveController.new("test.xtpp", Xtpp::NcursesRender)
+ctrl = Xtpp::InteractiveController.new(input, Xtpp::NcursesRender)
 ctrl.run
-
-
-#def with_page_break(title)
-#	$stdout.puts "---------- Begin Page #{title} ----------"
-#	yield
-#	$stdout.puts "---------- End of Page #{title} ----------"
-#end
-
-#presentation_file.pages.each do |page|
-	#with_page_break(page.title) do
-#		page.show
-	#end
-#end
+ctrl.close
