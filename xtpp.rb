@@ -20,27 +20,18 @@ def load_ncurses
 end
 
 load_ncurses
-renderer = Xtpp::NcrusesRender.new
-page_builder = Xtpp::PageBuilder.new(renderer)
-presentation_file = Xtpp::FileParser.new('test.tpp', page_builder)
+ctrl = Xtpp::InteractiveController.new("test.tpp", Xtpp::NcursesRender)
+ctrl.run
 
-def with_page_break(title)
-	$stdout.puts "---------- Begin Page #{title} ----------"
-	yield
-	$stdout.puts "---------- End of Page #{title} ----------"
-end
 
-presentation_file.parse
+#def with_page_break(title)
+#	$stdout.puts "---------- Begin Page #{title} ----------"
+#	yield
+#	$stdout.puts "---------- End of Page #{title} ----------"
+#end
 
-presentation_file.pages.each do |page|
+#presentation_file.pages.each do |page|
 	#with_page_break(page.title) do
-		page.show
+#		page.show
 	#end
-end
-
-
-#render = Gutpp::BaseRender.new
-#p render.split_lines("text to split this isaverylongstringthatexceedswidth", 4)
-#p render.split_lines_old("text to split this isaverylongstringthatexceedswidth", 4)
-#render.do_footer
-#p render.methods
+#end

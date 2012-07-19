@@ -2,9 +2,8 @@
 
 module Xtpp
 	class Page
-		def initialize(title, render)
+		def initialize(title)
 			@title = title
-			@render = render
 			@lines = []
 			@cur_line = 0
 			@eop = false # eop means end of page
@@ -37,21 +36,5 @@ module Xtpp
 		def title
 			@title
 		end
-
-		def show
-			@lines.each { | line | @render.render(line) }
-		end
-		
-	end
-
-	class PageBuilder
-		def initialize(render)
-			@render = render
-		end
-		
-		def build(title)
-			Page.new(title, @render)
-		end
-		
 	end
 end

@@ -2,9 +2,8 @@
 
 module Xtpp
 	class FileParser
-		def initialize(file_name, page_builder)
+		def initialize(file_name)
 			@file_name = file_name
-			@page_builder = page_builder
 			@pages = []
 		end
 
@@ -17,7 +16,7 @@ module Xtpp
 			end
 
 			n_pages = 0
-			cur_page = @page_builder.build("slide #{n_pages + 1}".to_s)
+			cur_page = Xtpp::Page.new("slide #{n_pages + 1}".to_s)
 
 			f.each_line do | line |
 				line.chomp!
@@ -32,7 +31,7 @@ module Xtpp
 					else
 						name.strip!
 					end
-					cur_page = @page_builder.build(name)
+					cur_page = Xtpp::Page.new(name)
 				else
 					cur_page.line = line
 				end

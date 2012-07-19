@@ -5,40 +5,46 @@ module Xtpp
 		def initialize
 			
 		end
-		
-		@commands = ["footer", "header", "refresh", "new_page", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "slide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
-		@commands.each do |command|
-			define_method("do_#{command}") do |params|
-				$stderr.puts "Error: BaseRender#do_#{command} has been called directly."
-				Kernel.exit(1)
-			end
-		end
 
 		def split_lines(text, width)
+			$stderr.puts "text: #{text}; width: #{width}"
 			lines = []
 			return lines unless text
 			begin
 				text.lstrip!
-				idx = text.length < width ? text.length : ((text.index(" ").nil? or text.index(" ") > width) ? width : text.index(" "))
+				idx = text.length < width ? text.length : ((text.index(" ", -1).nil? or text.index(" ", -1) > width) ? width : text.index(" ", -1))
+				$stderr.puts "idx: #{idx}"
 				lines << text[0..idx - 1]
 				text = text[idx..-1]
 			end while text.length > 0
 			lines
 		end
 
-		def render(line)
-			@commands = ["footer", "header", "refresh", "new_page", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "slide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
-			@commands.each do |command|
-				if Regexp.new("^--#{command} ") =~ line
-					method_name = "do_#{$&[2..-1].strip}"
-					params = line.sub(Regexp.new("^#{$&}"), "").strip
-					self.send(method_name, params)
-					return true if command == "wait"
-				else
-					print_line(line)
-				end
+		def self.define_command_method(name)
+			define_method(name) do |params|
+				$stderr.puts "Error: BaseRender#do_#{name} has been called directly."
+				Kernel.exit(1)
 			end
+		end
 
+		commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		commands.each { |command| define_command_method "do_#{command}"}
+
+		def render(line, eop)
+			matched = ""
+			commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			commands.each do |command|
+				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
+			end
+			if matched != ""
+				method_name = "do_#{matched[2..-1].strip}"
+				params = line.sub(Regexp.new("^#{matched}"), "").strip
+				self.send(method_name, params)
+				return true if method_name == "do_wait"
+				return false
+			else
+				print_line(line)
+			end
 			return false
 		end
 		
@@ -55,7 +61,7 @@ module Xtpp
 		
 	end
 
-	class NcrusesRender < BaseRender
+	class NcursesRender < BaseRender
 		require "./color.rb"
 		def initialize
 			Ncurses.initscr
@@ -95,7 +101,7 @@ module Xtpp
 			@screen.refresh
 		end
 
-		def do_new_page(params)
+		def do_newpage(params)
 			@cur_line = @voffset
 			@output = @shelloutput = false
 			setsizes
@@ -195,9 +201,9 @@ module Xtpp
 			@screen.attroff(Ncurses::A_UNDERLINE)
 		end
 
-		def do_beginslide(direction)
+		def do_beginslide(position)
 			@slideoutput = true
-			@slidedir = direction
+			@slidedir = position
 		end
 
 		def do_endslide(params)
@@ -222,6 +228,7 @@ module Xtpp
 			width = @termwidth - 2 * @indent
 			width -= 2 if @output or @shelloutput
 			lines = split_lines(line, width)
+			$stderr.puts "lines: #{lines}"
 			lines.each do |l|
 				@screen.move(@cur_line, @indent)
 				@screen.addstr("| ") if (@output or @shelloutput) and ! @slideoutput
@@ -298,31 +305,76 @@ module Xtpp
 		end
 
 		def get_key
-			
-		end
-
-		def clear
-			
+			ch = @screen.getch
+			case ch
+			when Ncurses::KEY_RIGHT
+				return :keyright
+			when Ncurses::KEY_DOWN
+				return :keydown
+			when Ncurses::KEY_LEFT
+				return :keyleft
+			when Ncurses::KEY_UP
+				return :keyup
+			when Ncurses::KEY_RESIZE
+				return :keyresize
+			else
+				return ch
+			end
 		end
 
 		def store_screen
-			
+			@screen.dupwin
 		end
 
-		def restore_screen
-			
+		def restore_screen(s)
+			Ncurses.overwrite(s, @screen)
 		end
 
-		def draw_slidenum(num)
-			
+		def draw_slidenum(cur_page,max_pages,eop)
+			@screen.move(@termheight - 2, @indent)
+			@screen.attroff(Ncurses::A_BOLD) # this is bad
+			@screen.addstr("[slide #{cur_page}/#{max_pages}]")
+			do_footer(@footer_txt) if @footer_txt.to_s.length > 0
+			do_header(@header_txt) if @header_txt.to_s.length > 0
+			draw_eop_marker if eop
 		end
 
-		def refresh
-			
+		def do_refresh(params)
+			@screen.refresh
 		end
 
 		def show_help
-			
+			help_text = [ 
+				"xtpp help", 
+				"",
+				"space bar ............................... display next entry within page",
+				"space bar, cursor-down, cursor-right .... display next page",
+				"b, cursor-up, cursor-left ............... display previous page",
+				"q, Q .................................... quit tpp",
+				"j, J .................................... jump directly to page",
+				"l, L .................................... reload current file",
+				"s, S .................................... jump to the first page",
+				"e, E .................................... jump to the last page",
+				"c, C .................................... start command line",
+				"?, h .................................... this help screen" 
+			]
+			@screen.clear
+			y = @voffset
+			help_text.each do |line|
+				@screen.move(y,@indent)
+				@screen.addstr(line)
+				y += 1
+			end
+			@screen.move(@termheight - 2, @indent)
+			@screen.addstr("Press any key to return to slide")
+			@screen.refresh
+		end
+
+		def draw_eop_marker
+			@screen.move(@termheight - 2, @indent - 1)
+			@screen.attron(A_BOLD)
+			@screen.addstr("*")
+			@screen.attroff(A_BOLD)
 		end
 
 		private
