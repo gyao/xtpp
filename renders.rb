@@ -31,7 +31,7 @@ module Xtpp
 			end
 		end
 
-		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable"]
+		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable", "begincolumn", "endcolumn"]
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
@@ -43,7 +43,7 @@ module Xtpp
 			end
 
 			matched = ""
-			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable"]
+			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable", "begincolumn", "endcolumn"]
 			commands.each do |command|
 				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
 			end
@@ -312,6 +312,20 @@ module Xtpp
 			@table = false
 			table = Terminal::Table.new :rows => @table_rows
 			table.headings = @table_heading unless @table_heading.empty?
+			table.to_s.split("\n").each do | line |
+				print_line(line)
+			end
+		end
+
+		def do_begincolumn(params)
+			@table = true
+			@table_rows = []
+		end
+
+		def do_endcolumn(params)
+			@table = false
+			table = Terminal::Table.new :rows => @table_rows
+			table.style = {:width => @termwidth - @indent * 2, :border_x => "", :border_i => "", :border_y => ""}
 			table.to_s.split("\n").each do | line |
 				print_line(line)
 			end
