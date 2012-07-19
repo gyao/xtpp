@@ -39,7 +39,7 @@ module Xtpp
 				@pages = parser.pages
 				@cur_page = @pages.size - 1 if @cur_page >= @pages.size
 				@renderer.clear
-				@renderer.do_newpage(nil)
+				@renderer.new_page
 				do_run
 			end while @reload_file
 		end
@@ -82,7 +82,7 @@ module Xtpp
 						if p >= 0 and p < @pages.size
 							@cur_page = p
 							@pages[@cur_page].reset_eop
-							@renderer.do_newpage(nil)
+							@renderer.new_page
 						else
 							@renderer.restore_screen(screen)
 						end
@@ -105,14 +105,14 @@ module Xtpp
 						if @cur_page + 1 < @pages.size and eop then
 							@cur_page += 1
 							@pages[@cur_page].reset_eop
-							@renderer.do_newpage(nil)
+							@renderer.new_page
 						end
 						break
 					when 'b'[0], 'B'[0], :keyleft, :keyup
 						if @cur_page > 0 then
 							@cur_page -= 1
 							@pages[@cur_page].reset_eop
-							@renderer.do_newpage(nil)
+							@renderer.new_page
 						end
 						break
 					when :keyresize

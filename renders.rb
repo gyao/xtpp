@@ -27,13 +27,13 @@ module Xtpp
 			end
 		end
 
-		commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		commands = ["footer", "header", "refresh", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
 			$stderr.puts line.end_with? "||"
 			matched = ""
-			commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			commands = ["footer", "header", "refresh", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 			commands.each do |command|
 				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
 			end
@@ -100,13 +100,6 @@ module Xtpp
 
 		def do_refresh(params)
 			@screen.refresh
-		end
-
-		def do_newpage(params)
-			@cur_line = @voffset
-			@output = @shelloutput = false
-			setsizes
-			@screen.clear
 		end
 
 		def do_heading(line)
@@ -376,6 +369,13 @@ module Xtpp
 			@screen.attron(A_BOLD)
 			@screen.addstr("*")
 			@screen.attroff(A_BOLD)
+		end
+
+		def new_page
+			@cur_line = @voffset
+			@output = @shelloutput = false
+			setsizes
+			@screen.clear
 		end
 
 		private
