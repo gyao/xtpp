@@ -23,7 +23,6 @@ module Xtpp
 		def initialize(file_name, renderer_name)
 			@file_name = file_name
 			@renderer = renderer_name.new
-			$stderr.puts @renderer
 			@cur_page = 0
 		end
 

@@ -31,7 +31,7 @@ module Xtpp
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
-			if line.end_with? "||"
+			if line.respond_to?("end_with?") and line.end_with? "||"
 				ret_value = true
 				line.chomp!("||")
 			else
@@ -141,10 +141,6 @@ module Xtpp
 
 		def do_exec(params)
 			# TODO: implement later
-		end
-
-		def do_wait(params)
-			# nothing
 		end
 
 		def do_beginoutput(params)
