@@ -27,12 +27,13 @@ module Xtpp
 			end
 		end
 
-		commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
+			$stderr.puts line.end_with? "||"
 			matched = ""
-			commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "boldon", "boldoff", "revon", "revoff", "ulon", "uloff", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			commands = ["footer", "header", "refresh", "newpage", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 			commands.each do |command|
 				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
 			end
@@ -177,28 +178,28 @@ module Xtpp
 			Kernel.sleep(time2sleep.to_i)
 		end
 
-		def do_boldon(params)
-			@screen.attron(Ncurses::A_BOLD)
+		def do_bold(switch)
+			if switch == "on"
+				@screen.attron(Ncurses::A_BOLD)
+			else
+				@screen.attroff(Ncurses::A_BOLD) # default is turn off, I'm a conservative guy... :)
+			end
 		end
 
-		def do_boldoff(params)
-			@screen.attroff(Ncurses::A_BOLD)
+		def do_reverse(switch)
+			if switch == "on"
+				@screen.attron(Ncurses::A_REVERSE) 
+			else
+				@screen.attroff(Ncurses::A_REVERSE)
+			end
 		end
 
-		def do_revon(params)
-			@screen.attron(Ncurses::A_REVERSE)
-		end
-
-		def do_revoff(params)
-			@screen.attroff(Ncurses::A_REVERSE)
-		end
-
-		def do_ulon(params)
-			@screen.attron(Ncurses::A_UNDERLINE)
-		end
-
-		def do_uloff(params)
-			@screen.attroff(Ncurses::A_UNDERLINE)
+		def do_underline(switch)
+			 if switch == "on"
+			 	@screen.attron(Ncurses::A_UNDERLINE)
+			 else
+				@screen.attroff(Ncurses::A_UNDERLINE)
+			end
 		end
 
 		def do_beginslide(position)
@@ -210,8 +211,8 @@ module Xtpp
 			@slideoutput = false
 		end
 
-		def do_sethugefont(params)
-			@figletfont = params
+		def do_sethugefont(font)
+			@figletfont = font
 		end
 
 		def do_huge(figlet_text)
@@ -249,9 +250,9 @@ module Xtpp
 		end
 
 		def do_title(title)
-			do_boldon(nil)
+			do_bold("on")
 			do_align(:center, title)
-			do_boldoff(nil)
+			do_bold("off")
 			do_align(:center, "")
 		end
 

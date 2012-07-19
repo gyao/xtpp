@@ -1,11 +1,7 @@
 * i18n
 * shelloutput prompt
 * table support
-
---begintable
-col1, col2
-
---endtable
 * image?
+* draw horizontal line
 
 dependents: figlet, ncruses-ruby

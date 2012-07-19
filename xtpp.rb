@@ -20,7 +20,7 @@ def load_ncurses
 end
 
 load_ncurses
-ctrl = Xtpp::InteractiveController.new("test.tpp", Xtpp::NcursesRender)
+ctrl = Xtpp::InteractiveController.new("test.xtpp", Xtpp::NcursesRender)
 ctrl.run
 
 
