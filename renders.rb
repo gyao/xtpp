@@ -31,7 +31,7 @@ module Xtpp
 			end
 		end
 
-		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable"]
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
@@ -43,7 +43,7 @@ module Xtpp
 			end
 
 			matched = ""
-			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable"]
 			commands.each do |command|
 				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
 			end
@@ -75,6 +75,7 @@ module Xtpp
 
 	class NcursesRender < BaseRender
 		require "./color.rb"
+		require 'terminal-table'
 		def initialize
 			Ncurses.initscr
 			Ncurses.curs_set(0)
@@ -94,6 +95,9 @@ module Xtpp
 			@cur_line = @voffset
 			@output = @shelloutput = false
 			@bold = @reverse = @underline = false
+			@table = false
+			@table_rows = []
+			@table_heading = []
 		end
 
 		# implements template methods
@@ -232,7 +236,6 @@ module Xtpp
 			width = @termwidth - 2 * @indent
 			width -= 2 if @output or @shelloutput
 			lines = split_lines(line, width)
-			$stderr.puts "lines: #{lines}"
 			lines.each do |l|
 				@screen.move(@cur_line, @indent)
 				@screen.addstr("| ") if (@output or @shelloutput) and ! @slideoutput
@@ -241,6 +244,8 @@ module Xtpp
 					type_line(l)
 				elsif @slideoutput then
 					slide_text(l)
+				elsif @table
+					@table_rows << line.split(",")
 				else
 					@screen.addstr(l)
 				end
@@ -248,7 +253,7 @@ module Xtpp
 					@screen.move(@cur_line,@termwidth - @indent - 2)
 					@screen.addstr(" |")
 				end
-				@cur_line += 1
+				@cur_line += 1 unless @table
 			end
 		end
 
@@ -295,6 +300,21 @@ module Xtpp
 		def do_fgcolor(color)
 			@fgcolor = ColorMap.get_color_pair(color)
 			Ncurses.attron(Ncurses.COLOR_PAIR(@fgcolor))
+		end
+
+		def do_begintable(table_heading)
+			@table_heading = table_heading.split(",")
+			@table = true
+			@table_rows = []
+		end
+
+		def do_endtable(params)
+			@table = false
+			table = Terminal::Table.new :rows => @table_rows
+			table.headings = @table_heading unless @table_heading.empty?
+			table.to_s.split("\n").each do | line |
+				print_line(line)
+			end
 		end
 
 		# controller implementations
