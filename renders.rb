@@ -7,13 +7,17 @@ module Xtpp
 		end
 
 		def split_lines(text, width)
-			$stderr.puts "text: #{text}; width: #{width}"
 			lines = []
 			return lines unless text
 			begin
 				text.lstrip!
-				idx = text.length < width ? text.length : ((text.index(" ", -1).nil? or text.index(" ", -1) > width) ? width : text.index(" ", -1))
-				$stderr.puts "idx: #{idx}"
+				idx = width
+				if text.length < width
+					idx = text.length
+				else
+					tmp_line = text[0..width - 1]
+					idx = tmp_line.rindex(" ") if tmp_line.include? " " 
+				end
 				lines << text[0..idx - 1]
 				text = text[idx..-1]
 			end while text.length > 0
