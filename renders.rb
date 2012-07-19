@@ -27,13 +27,13 @@ module Xtpp
 			end
 		end
 
-		commands = ["footer", "header", "refresh", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
 			$stderr.puts line.end_with? "||"
 			matched = ""
-			commands = ["footer", "header", "refresh", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
+			commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "wait", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "print_line", "title", "author", "date", "bgcolor", "fgcolor"]
 			commands.each do |command|
 				matched = $& if Regexp.new("^--#{command}(\s)*") =~ line
 			end
@@ -97,10 +97,6 @@ module Xtpp
 			@header_txt = header_txt
 			@screen.move(@termheight - @termheight+1, (@termwidth - header_txt.length) / 2)
 			@screen.addstr(header_txt)
-		end
-
-		def do_refresh(params)
-			@screen.refresh
 		end
 
 		def do_heading(line)
@@ -349,10 +345,6 @@ module Xtpp
 			@screen.attron(Ncurses::A_UNDERLINE) if @underline
 		end
 
-		def do_refresh(params)
-			@screen.refresh
-		end
-
 		def show_help
 			help_text = [ 
 				"xtpp help", 
@@ -392,6 +384,10 @@ module Xtpp
 			@output = @shelloutput = false
 			setsizes
 			@screen.clear
+		end
+
+		def refresh
+			@screen.refresh
 		end
 
 		private

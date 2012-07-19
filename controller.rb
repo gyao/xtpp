@@ -59,7 +59,7 @@ module Xtpp
 				
 				# draw slide number on the bottom left and redraw:
 				@renderer.draw_slidenum(@cur_page + 1, @pages.size, eop)
-				@renderer.do_refresh(nil)
+				@renderer.refresh
 
 				# read a character from the keyboard
 				# a "break" in the when means that it breaks the loop, i.e. goes on with visualizing lines
