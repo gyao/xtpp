@@ -318,7 +318,7 @@ module Xtpp
 			when Ncurses::KEY_RESIZE
 				return :keyresize
 			else
-				return ch
+				return ch.chr
 			end
 		end
 
