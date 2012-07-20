@@ -125,13 +125,15 @@ module Xtpp
 			draw_border
 		end
 
-		def do_horline(params)
+		def do_horline(c)
+			char = c == "" ? "-" : c
 			@screen.attron(Ncurses::A_BOLD)
 			@termwidth.times do |x|
 				@screen.move(@cur_line, x)
-				@screen.addstr("-")
+				@screen.addstr(char)
 			end
 			@screen.attroff(Ncurses::A_BOLD)
+			@cur_line += 1
 		end
 
 		def do_color(color)
