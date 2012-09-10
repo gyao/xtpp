@@ -1,7 +1,0 @@
-* i18n
-* shelloutput prompt (done!)
-* table support (done!)
-* image?
-* draw horizontal line
-
-dependents: figlet, ncruses-ruby, terminal-table
