@@ -2,8 +2,12 @@
 
 module Xtpp
 	class BaseRender
-		def initialize
-			
+		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable", "begincolumn", "endcolumn"]
+		commands.each do |command|
+			define_method "do_#{command}" do 
+				$stderr.puts "Error: BaseRender#do_#{command} has been called directly."
+				Kernel.exit(1)
+			end
 		end
 
 		def split_lines(text, width)
@@ -23,16 +27,6 @@ module Xtpp
 			end while text.length > 0
 			lines
 		end
-
-		def self.define_command_method(name)
-			define_method(name) do |params|
-				$stderr.puts "Error: BaseRender#do_#{name} has been called directly."
-				Kernel.exit(1)
-			end
-		end
-
-		commands = ["footer", "header", "heading", "withborder", "horline", "color", "center", "right", "exec", "beginoutput", "beginshelloutput", "endoutput", "endshelloutput", "sleep", "bold", "reverse", "underline", "beginslide", "endslide", "command_prompt", "sethugefont", "huge", "title", "author", "date", "bgcolor", "fgcolor", "begintable", "endtable", "begincolumn", "endcolumn"]
-		commands.each { |command| define_command_method "do_#{command}"}
 
 		def render(line, eop)
 			if line.respond_to?("end_with?") and line.end_with? "||"
